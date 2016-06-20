@@ -200,4 +200,3 @@ for host in hostnames:
 	s.close()
 
 fdout.close()
-
