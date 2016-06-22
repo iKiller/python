@@ -2,7 +2,7 @@
 from socket import *
 
 HOST='localhost'
-PORT=21567
+PORT=5000 #21567
 BUFSIZ = 1024
 ADDR = (HOST, PORT)
 
