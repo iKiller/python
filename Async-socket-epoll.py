@@ -19,22 +19,20 @@ serversocket.setblocking(0)
 
 kqueue = select.kqueue()
 kevents = [select.kevent(serversocket.fileno(), filter=select.KQ_FILTER_READ, flags=select.KQ_EV_ADD|select.KQ_EV_ENABLE), ]
-index=1
 
 try:
     connections = {}; requests = {}; responses = {}
     while True:
-        events = kqueue.control(kevents, 0)
+        events = kqueue.control(kevents, 1)
         for event in events:
             if event.ident == serversocket.fileno():
                 connection, address = serversocket.accept()
-                print ("...connect from " + address)
+                print "...connect from ", address
                 connection.setblocking(0)
-                connections[index] = connection
-                requests[index] = b''
-                responses[index] = response
-                kevents.append(select.kevent(connections[index].fileno(), select.KQ_FILTER_READ, select.KQ_EV_ADD, udata=index))
-                index += 1
+                connections[connection.fileno()] = connection
+                requests[connection.fileno()] = b''
+                responses[connection.fileno()] = response
+                kevents.append(select.kevent(connections[connection.fileno()].fileno(), select.KQ_FILTER_READ, select.KQ_EV_ADD, udata=connection.fileno()))
             elif event.udata >= 1 and event.filter == select.KQ_FILTER_READ and event.flags == select.KQ_EV_ADD:
                 requests[event.udata] += connections[event.udata].recv(1024)
                 if EOL1 in requests[event.udata] or EOL2 in requests[event.udata]:
@@ -48,10 +46,10 @@ try:
                     kevents.remove(select.kevent(connections[event.udata].fileno(), select.KQ_FILTER_WRITE, select.KQ_EV_ADD, udata=event.udata))
                     connections[event.udata].shutdown(socket.SHUT_RDWR)
                     connections[event.udata].close()
-                del connections[event.udata]
-                del requests[event.udata]
-                del responses[event.udata]
-                index -= 1
+                    print "...close connection from", address
+                    del connections[event.udata]
+                    del requests[event.udata]
+                    del responses[event.udata]
 finally:
     kqueue.close()
     serversocket.close()
