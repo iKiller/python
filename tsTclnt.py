@@ -12,10 +12,10 @@ tcpCliSock.connect(ADDR)
 while True:
     data = raw_input('> ')
     if not data:
+        tcpCliSock.send('\n')
         break
     tcpCliSock.send(data)
     data = tcpCliSock.recv(BUFSIZ)
-
     if not data:
         break
     print data
